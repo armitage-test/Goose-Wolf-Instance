@@ -13,6 +13,7 @@ from pytrends.request import TrendReq
 from sqlalchemy.orm import Session
 
 from .models import ShirtTrend
+from .email_sender import send_trend_report
 
 logger = logging.getLogger(__name__)
 
@@ -148,4 +149,8 @@ def run_trend_fetch(db: Session) -> int:
     db.add_all(trends)
     db.commit()
     logger.info("Inserted %d trend records", len(trends))
+
+    fetched_at = trends[0].fetched_at
+    send_trend_report(trends, fetched_at)
+
     return len(trends)
