@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchTrends, refreshTrends, fetchTrendSummary } from '../api/trends';
 
 const ACTION_COLORS = {
-  'Stock up': '#2ecc71',
-  'Trending now': '#3498db',
-  'Watch closely': '#f39c12',
-  'Low interest': '#95a5a6',
+  'Design now': '#2ecc71',
+  'Trending — act fast': '#3498db',
+  'Worth watching': '#f39c12',
+  'Fading out': '#95a5a6',
 };
 
 const DIRECTION_LABEL = {
@@ -116,9 +116,9 @@ export default function TrendDashboard() {
   };
 
   return (
-    <section aria-label="Shirt Trend Dashboard" style={{ marginTop: '2rem' }}>
+    <section aria-label="Word Trend Dashboard" style={{ marginTop: '2rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <h2 style={{ margin: 0 }}>Shirt Trends</h2>
+        <h2 style={{ margin: 0 }}>nene &amp; wolf — Word Trends</h2>
         <button
           onClick={handleRefresh}
           disabled={refreshing || loading}
@@ -173,11 +173,11 @@ export default function TrendDashboard() {
       )}
 
       {loading ? (
-        <p>Loading trends...</p>
+        <p>Loading word trends...</p>
       ) : trends.length === 0 ? (
         <p style={{ color: '#777' }}>
-          No trend data yet. Click <strong>Refresh Now</strong> to fetch the latest shirt
-          trends from Google Trends.
+          No trend data yet. Click <strong>Refresh Now</strong> to pull the latest word
+          &amp; phrase trends from Google.
         </p>
       ) : (
         <ul style={{ padding: 0 }}>

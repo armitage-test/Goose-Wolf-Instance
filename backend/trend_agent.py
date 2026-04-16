@@ -1,8 +1,11 @@
 """
-Shirt Trend Monitor Agent
+Word Trend Monitor Agent — Nene & Wolf
 
-Fetches shirt trend data from Google Trends and stores results in the database.
-Run automatically every 6 hours via APScheduler, or manually via POST /trends/refresh.
+Tracks trending words and short phrases relevant to humor/sarcasm and
+empowerment/identity graphic tees. High-interest, rising phrases signal
+the right moment to print a new design.
+
+Runs automatically every 6 hours via APScheduler, or manually via POST /trends/refresh.
 """
 
 import time
@@ -17,55 +20,79 @@ from .email_sender import send_trend_report
 
 logger = logging.getLogger(__name__)
 
-SHIRT_KEYWORDS = [
-    "graphic tee",
-    "oversized t-shirt",
-    "polo shirt",
-    "linen shirt",
-    "henley shirt",
-    "tie dye shirt",
-    "vintage band tee",
-    "floral shirt",
-    "denim shirt",
-    "flannel shirt",
-    "compression shirt",
-    "crop top shirt",
-    "bowling shirt",
-    "Hawaiian shirt",
-    "quarter zip shirt",
+# ---------------------------------------------------------------------------
+# Tracked words & phrases
+# Each entry is a standalone search term — we track cultural interest in the
+# word/phrase itself, not shirt searches. Rising interest = good design timing.
+# ---------------------------------------------------------------------------
+
+WORD_KEYWORDS = [
+    # Humor & sarcasm — single words / short punchy phrases
+    "unhinged",
+    "feral",
+    "chaotic",
+    "not today",
+    "send help",
+    "hot mess",
+    "goblin mode",
+    "big yikes",
+    "no thoughts",
+    "chaos gremlin",
+    # Empowerment & identity — single words / short punchy phrases
+    "main character",
+    "villain era",
+    "soft life",
+    "that girl",
+    "delulu",
+    "unbothered",
+    "slay",
+    "it's giving",
+    "understood the assignment",
+    "no apologies",
 ]
 
 CATEGORIES = {
-    "graphic tee": "streetwear",
-    "oversized t-shirt": "streetwear",
-    "polo shirt": "smart-casual",
-    "linen shirt": "casual",
-    "henley shirt": "casual",
-    "tie dye shirt": "casual",
-    "vintage band tee": "streetwear",
-    "floral shirt": "resort",
-    "denim shirt": "casual",
-    "flannel shirt": "casual",
-    "compression shirt": "athletic",
-    "crop top shirt": "streetwear",
-    "bowling shirt": "retro",
-    "Hawaiian shirt": "resort",
-    "quarter zip shirt": "smart-casual",
+    # humor
+    "unhinged": "humor",
+    "feral": "humor",
+    "chaotic": "humor",
+    "not today": "humor",
+    "send help": "humor",
+    "hot mess": "humor",
+    "goblin mode": "humor",
+    "big yikes": "humor",
+    "no thoughts": "humor",
+    "chaos gremlin": "humor",
+    # empowerment
+    "main character": "empowerment",
+    "villain era": "empowerment",
+    "soft life": "empowerment",
+    "that girl": "empowerment",
+    "delulu": "empowerment",
+    "unbothered": "empowerment",
+    "slay": "empowerment",
+    "it's giving": "empowerment",
+    "understood the assignment": "empowerment",
+    "no apologies": "empowerment",
 }
 
 
 def _derive_action(score: float, direction: str) -> str:
+    """
+    Translate a trend score + direction into a design timing recommendation.
+    High interest + rising = peak cultural moment, ideal time to print the design.
+    """
     if score >= 60 and direction == "rising":
-        return "Stock up"
+        return "Design now"
     if score >= 40 and direction == "rising":
-        return "Trending now"
-    if score >= 30:
-        return "Watch closely"
-    return "Low interest"
+        return "Trending — act fast"
+    if score >= 25:
+        return "Worth watching"
+    return "Fading out"
 
 
 def _derive_direction(series: list[float]) -> str:
-    """Compare the last data point against the prior average to classify direction."""
+    """Compare the most recent data point against the prior average."""
     if len(series) < 2:
         return "stable"
     last = series[-1]
@@ -80,16 +107,16 @@ def _derive_direction(series: list[float]) -> str:
 
 
 def fetch_google_trends(db: Session) -> list[ShirtTrend]:
-    """Fetch interest data from Google Trends for all shirt keywords."""
+    """Fetch 4-week interest data from Google Trends for all tracked words."""
     pytrends = TrendReq(hl="en-US", tz=360, timeout=(10, 25))
     results: list[ShirtTrend] = []
     fetched_at = datetime.utcnow()
 
-    # pytrends limits payload to 5 keywords per request
+    # pytrends limits each payload to 5 keywords
     chunk_size = 5
     chunks = [
-        SHIRT_KEYWORDS[i : i + chunk_size]
-        for i in range(0, len(SHIRT_KEYWORDS), chunk_size)
+        WORD_KEYWORDS[i : i + chunk_size]
+        for i in range(0, len(WORD_KEYWORDS), chunk_size)
     ]
 
     for chunk in chunks:
@@ -101,7 +128,6 @@ def fetch_google_trends(db: Session) -> list[ShirtTrend]:
                 logger.warning("Empty response from Google Trends for chunk: %s", chunk)
                 continue
 
-            # Drop the isPartial column if present
             if "isPartial" in df.columns:
                 df = df.drop(columns=["isPartial"])
 
@@ -136,10 +162,10 @@ def fetch_google_trends(db: Session) -> list[ShirtTrend]:
 
 def run_trend_fetch(db: Session) -> int:
     """
-    Main entry point: fetch trends and persist them to the database.
+    Main entry point: fetch word trends and persist them to the database.
     Returns the number of trend rows inserted.
     """
-    logger.info("Starting shirt trend fetch run")
+    logger.info("Starting Nene & Wolf word trend fetch")
     trends = fetch_google_trends(db)
 
     if not trends:
@@ -148,7 +174,7 @@ def run_trend_fetch(db: Session) -> int:
 
     db.add_all(trends)
     db.commit()
-    logger.info("Inserted %d trend records", len(trends))
+    logger.info("Inserted %d word trend records", len(trends))
 
     fetched_at = trends[0].fetched_at
     send_trend_report(trends, fetched_at)
