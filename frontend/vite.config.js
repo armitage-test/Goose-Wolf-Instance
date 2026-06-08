@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       '/tasks': 'http://localhost:8000',
       '/health': 'http://localhost:8000',
+      '/trends': 'http://localhost:8000',
     },
   },
   test: {

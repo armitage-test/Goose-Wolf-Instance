@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchTasks, createTask, updateTask, deleteTask } from './api/tasks';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
+import TrendDashboard from './components/TrendDashboard';
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
@@ -67,6 +68,8 @@ export default function App() {
         onDelete={handleDelete}
         onEdit={handleEdit}
       />
+      <hr />
+      <TrendDashboard />
     </main>
   );
 }
